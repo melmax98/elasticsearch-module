@@ -1,10 +1,8 @@
 package org.example.providers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.http.HttpHost;
 import org.apache.http.util.EntityUtils;
-import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
@@ -48,36 +46,96 @@ public class ElasticJavaRestApiDataProvider {
         return client.performRequest(request);
     }
 
-    public List<Event> getAllEvents(String indexName) throws IOException {
+    public List<Event> getAllEvents(String indexName) {
         Request request = new Request("GET", "/" + indexName + "/_search");
 
         request.setJsonEntity("{\"size\": " + QUERY_MAX_RESULTS_SIZE + "}");
-        Response response = client.performRequest(request);
-        String responseResult = EntityUtils.toString(response.getEntity());
 
-        return getEventsFromResponse(responseResult);
+        return getEventsFromRequest(request);
     }
 
     public List<Event> workshopEventsOnly(String indexName) {
-        return null;
+        Request request = new Request("GET", "/" + indexName + "/_search");
+
+        request.setJsonEntity("{\n" +
+                "  \"size\": " + QUERY_MAX_RESULTS_SIZE + ",\n" +
+                "  \"query\": {\n" +
+                "    \"match\": {\n" +
+                "      \"eventType\": \"WORKSHOP\"\n" +
+                "    }\n" +
+                "  }\n" +
+                "}");
+
+
+        return getEventsFromRequest(request);
     }
 
     public List<Event> eventsWithTitle(String indexName, String title) {
-        return null;
+        Request request = new Request("GET", "/" + indexName + "/_search");
+
+        request.setJsonEntity("{\n" +
+                "  \"size\": " + QUERY_MAX_RESULTS_SIZE + ",\n" +
+                "  \"query\": {\n" +
+                "    \"match\": {\n" +
+                "      \"title\": \"" + title + "\"\n" +
+                "    }\n" +
+                "  }\n" +
+                "}");
+
+
+        return getEventsFromRequest(request);
     }
 
     public List<Event> eventsWithTitleAndAfterDate(String indexName, String title, Date date) {
-        return null;
+        Request request = new Request("GET", "/" + indexName + "/_search");
+
+        request.setJsonEntity("{\n" +
+                "  \"size\": " + QUERY_MAX_RESULTS_SIZE + ",\n" +
+                "  \"query\": {\n" +
+                "    \"bool\": {\n" +
+                "      \"must\": [\n" +
+                "        {\n" +
+                "          \"match\": {\n" +
+                "              \"title\": \"" + title + "\"\n" +
+                "          }\n" +
+                "        },\n" +
+                "        {\n" +
+                "          \"range\": {\n" +
+                "            \"date\": {\n" +
+                "              \"gt\": " + date.getTime() + "\n" +
+                "            }\n" +
+                "          }\n" +
+                "        }\n" +
+                "      ]\n" +
+                "    }\n" +
+                "  }\n" +
+                "}");
+
+
+        return getEventsFromRequest(request);
     }
 
-    public BulkResponse deleteAllEventsWithTitle(String index, String title) {
-        return null;
+    public Response deleteAllEventsWithTitle(String indexName, String title) throws IOException {
+        Request request = new Request("POST", "/_bulk");
+        List<Event> events = eventsWithTitle(indexName, title);
+
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Event event : events) {
+            stringBuilder.append("{ \"delete\" : { \"_index\" :" + "\"" + indexName + "\", \"_id\" :  " + "\"" + event.getEventId() + "\" } }\n");
+        }
+
+        request.setJsonEntity(stringBuilder.toString());
+
+        return client.performRequest(request);
     }
 
-    private List<Event> getEventsFromResponse(String searchResponse) {
+    private List<Event> getEventsFromRequest(Request request) {
+
         List<Event> events = new ArrayList<>();
         try {
-            JsonNode jsonNode = JsonHelper.getInstance().readTree(searchResponse);
+            Response response = client.performRequest(request);
+            String responseResult = EntityUtils.toString(response.getEntity());
+            JsonNode jsonNode = JsonHelper.getInstance().readTree(responseResult);
             JsonNode hits = jsonNode.get("hits").get("hits");
 
             for (Object object : JsonHelper.getInstance().convertValue(hits, ArrayList.class)) {
@@ -87,8 +145,8 @@ public class ElasticJavaRestApiDataProvider {
                 Event event = JsonHelper.getInstance().readValue(eventJson, Event.class);
                 events.add(event);
             }
-        } catch (JsonProcessingException e) {
-            throw new NullPointerException();
+        } catch (IOException e) {
+            throw new NullPointerException(e.getMessage());
         }
         return events;
     }
