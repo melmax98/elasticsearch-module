@@ -7,6 +7,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.example.model.Entity;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 
 public class JsonHelper {
 
@@ -27,7 +31,20 @@ public class JsonHelper {
             return mapper.writeValueAsBytes(entity);
         } catch (JsonProcessingException e) {
             LOGGER.error("Could not parse given entity", e);
-            return new byte[0];
+            throw new NullPointerException();
+        }
+    }
+
+    public static String generateJsonStringFromFile (String filePath) throws IOException {
+        return new String(Files.readAllBytes(Paths.get(filePath)));
+    }
+
+    public static String generateJsonString(Entity entity) {
+        try {
+            return mapper.writeValueAsString(entity);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("Could not parse given entity", e);
+            throw new NullPointerException();
         }
     }
 }

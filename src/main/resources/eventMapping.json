@@ -1,0 +1,25 @@
+{
+  "properties": {
+    "eventId": {
+      "type": "long"
+    },
+    "title": {
+      "type": "text"
+    },
+    "eventType": {
+      "type": "keyword"
+    },
+    "date": {
+      "type": "long"
+    },
+    "place": {
+      "type": "text"
+    },
+    "description": {
+      "type": "text"
+    },
+    "subTopics": {
+      "type": "text"
+    }
+  }
+}
