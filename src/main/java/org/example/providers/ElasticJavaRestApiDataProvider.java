@@ -51,6 +51,7 @@ public class ElasticJavaRestApiDataProvider {
     public List<Event> getAllEvents(String indexName) throws IOException {
         Request request = new Request("GET", "/" + indexName + "/_search");
 
+        request.setJsonEntity("{\"size\": " + QUERY_MAX_RESULTS_SIZE + "}");
         Response response = client.performRequest(request);
         String responseResult = EntityUtils.toString(response.getEntity());
 
