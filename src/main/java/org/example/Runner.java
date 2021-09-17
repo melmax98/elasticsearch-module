@@ -1,6 +1,7 @@
 package org.example;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.example.model.Event;
 import org.example.model.EventType;
@@ -40,10 +41,11 @@ public class Runner {
                 )
         ), "4");
 
-        List<Event> events = elasticJavaApiDataProvider.getAllEvents("event1");
-        List<Event> workshopEventList = elasticJavaApiDataProvider.workshopEventsOnly("event1");
-        List<Event> eventsWithTitle = elasticJavaApiDataProvider.eventsWithTitle("event1", "tech-talk");
-        List<Event> eventsWithTitleAndDateAfter = elasticJavaApiDataProvider.eventsWithTitleAndAfterDate("event1", "tech-talk", simpleDateFormat.parse("2021-12-00"));
+        BulkResponse bulkItemResponses = elasticJavaApiDataProvider.deleteAllEventsWithTitle("event", "workshop");
+        List<Event> events = elasticJavaApiDataProvider.getAllEvents("event");
+        List<Event> workshopEventList = elasticJavaApiDataProvider.workshopEventsOnly("event");
+        List<Event> eventsWithTitle = elasticJavaApiDataProvider.eventsWithTitle("event", "tech-talk");
+        List<Event> eventsWithTitleAndDateAfter = elasticJavaApiDataProvider.eventsWithTitleAndAfterDate("event", "tech-talk", simpleDateFormat.parse("2021-12-00"));
     }
 
 }

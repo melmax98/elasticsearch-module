@@ -1,6 +1,8 @@
 package org.example.providers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
@@ -79,6 +81,28 @@ public class ElasticJavaApiDataProvider implements ElasticSearchProvider {
         return getEventsFromResponse(searchResponse);
     }
 
+    /**
+     * Entity must be with all fields not null
+     */
+    @Override
+    public IndexResponse createOrUpdateIndex(String indexName, Entity entity) {
+        return client.prepareIndex(indexName, "_doc")
+                .setSource(JsonHelper.generateJson(entity), XContentType.JSON)
+                .get();
+    }
+
+    @Override
+    public BulkResponse deleteAllEventsWithTitle(String index, String title) {
+        BulkRequestBuilder bulkRequest = client.prepareBulk();
+
+        List<Event> events = eventsWithTitle(index, title);
+        for (Event event : events) {
+            bulkRequest.add(client.prepareDelete(index, "_doc", event.getEventId().toString()));
+        }
+
+        return bulkRequest.get();
+    }
+
     private List<Event> getEventsFromResponse(SearchResponse searchResponse) {
         List<Event> result = new ArrayList<>();
         Event event;
@@ -88,19 +112,10 @@ public class ElasticJavaApiDataProvider implements ElasticSearchProvider {
             try {
                 event = JsonHelper.getInstance().readValue(jsonEvent, Event.class);
             } catch (JsonProcessingException e) {
-                event = null;
+                throw new NullPointerException();
             }
             result.add(event);
         }
         return result;
-    }
-
-    /**
-     * Entity must be with all fields not null
-     */
-    public IndexResponse createOrUpdateIndex(String indexName, Entity entity) {
-        return client.prepareIndex(indexName, "_doc")
-                .setSource(JsonHelper.generateJson(entity), XContentType.JSON)
-                .get();
     }
 }
