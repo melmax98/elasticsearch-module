@@ -1,20 +1,14 @@
 package org.example.providers;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.http.HttpHost;
-import org.apache.http.util.EntityUtils;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
-import org.example.JsonHelper;
-import org.example.model.ElasticResponseDto;
-import org.example.model.Entity;
-import org.example.model.Event;
+import com.fasterxml.jackson.databind.*;
+import org.apache.http.*;
+import org.apache.http.util.*;
+import org.elasticsearch.client.*;
+import org.example.*;
+import org.example.model.*;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 public class ElasticJavaRestApiDataProvider {
 
@@ -118,6 +112,10 @@ public class ElasticJavaRestApiDataProvider {
     public Response deleteAllEventsWithTitle(String indexName, String title) throws IOException {
         Request request = new Request("POST", "/_bulk");
         List<Event> events = eventsWithTitle(indexName, title);
+
+        if (events.isEmpty()) {
+            return null;
+        }
 
         StringBuilder stringBuilder = new StringBuilder();
         for (Event event : events) {
