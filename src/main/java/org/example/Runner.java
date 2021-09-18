@@ -18,9 +18,17 @@ public class Runner {
 
     private static final String MAPPING_PATH = "src/main/resources/eventMapping.json";
 
-    public static void main(String[] args) throws IOException, ParseException, JSONException {
-       testRestApiProvider();
-        testJavaApiProvider();
+    public static void main(String[] args) throws IOException, ParseException, JSONException, InterruptedException {
+        generateLogs();
+    }
+
+    private static void generateLogs() throws InterruptedException {
+        int i = 0;
+        while (true) {
+            Thread.sleep(500);
+            LOGGER.info(i + " [c133ee9a7bfa11e6ae2256b6b6499611 app_name=\"application-name\" app_version=\"1.0.0-SNAPSHOT\" hostname=\"localhost\"] 69427d6c966046c58804d7f4128f7505 MyApp: GOOD");
+            i++;
+        }
     }
 
     public static void testRestApiProvider() throws IOException {
